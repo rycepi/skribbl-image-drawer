@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const {mount,clampPosition}=require('./panel.js');
+assert.deepEqual(clampPosition(-50,-50,310,600,1000,800),{x:8,y:8});
+assert.deepEqual(clampPosition(2000,2000,310,600,1000,800),{x:682,y:712});
+function node(){return {style:{},events:{},addEventListener(n,f){this.events[n]=f;},setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};}
+const panel=node(),handle=node(),hide=node(),host=node();
+host.getBoundingClientRect=()=>({left:parseFloat(host.style.left)||676,top:parseFloat(host.style.top)||14,width:310,height:600});
+global.innerWidth=1000;global.innerHeight=800;global.window=node();
+mount(host,{getElementById:id=>({'drawer-panel':panel,'drawer-handle':handle,'drawer-hide':hide}[id])});
+const target={closest:()=>null};
+handle.events.pointerdown({button:0,pointerId:1,clientX:700,clientY:30,target});
+handle.events.pointermove({pointerId:1,clientX:300,clientY:60,preventDefault(){}});
+assert.equal(host.style.left,'276px');assert.equal(host.style.top,'44px');
+handle.events.pointerup({pointerId:1});let prevented=false;handle.events.click({preventDefault(){prevented=true;}});assert(prevented);
+hide.events.click({preventDefault(){},stopPropagation(){}});assert.equal(host.style.display,'none');
+let listener,reply;
+vm.runInNewContext(fs.readFileSync(require.resolve('./visibility.js'),'utf8'),{chrome:{runtime:{id:'test',onMessage:{addListener(fn){listener=fn;}}}},document:{getElementById:()=>host},window:{dispatchEvent(){}},Event:class{}});
+listener({type:'sid-visibility'},{id:'test'},value=>reply=value);assert.equal(reply.visible,false);
+listener({type:'sid-visibility',visible:true},{id:'test'},value=>reply=value);assert.equal(host.style.display,'');assert.equal(reply.visible,true);
+listener({type:'sid-visibility',visible:false},{id:'test'},value=>reply=value);assert.equal(reply.visible,false);
+const manifest=require('./manifest.json');for(const script of manifest.content_scripts.flatMap(s=>s.js))assert(fs.existsSync(require.resolve('./'+script)));
+assert.equal(manifest.action.default_popup,'popup.html');
+console.log('Passed: drag movement, viewport bounds, drag/collapse separation, hide/show messaging and manifest wiring.');

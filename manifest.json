@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Skribbl Image Drawer",
+  "version": "0.5.0",
+  "description": "Draw uploaded images as colored shapes and list English word candidates matching the visible skribbl.io hint.",
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://skribbl.io/*"
+      ],
+      "js": [
+        "core.js",
+        "words-en.js",
+        "hints.js",
+        "panel.js",
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://skribbl.io/*"
+      ],
+      "js": [
+        "visibility.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    }
+  ],
+  "action": {
+    "default_title": "Image Drawer settings",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  }
+}
